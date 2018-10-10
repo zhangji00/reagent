@@ -213,7 +213,11 @@ defmodule Reagent.Listener do
     connection  = self.connections |> Dict.get(ref)
     connections = self.connections |> Dict.delete(ref)
 
-    connection |> Socket.close
+    if is_port(connection.socket) do
+      connection |> Socket.close
+    else 
+      IO.puts "#{inspect connection}"
+    end
     Dict.delete(self.env, connection.id)
 
     case :queue.out(self.waiting) do
@@ -225,6 +229,12 @@ defmodule Reagent.Listener do
 
         { :noreply, %__MODULE__{self | connections: connections, waiting: queue} }
     end
+  end
+
+  def handle_info(info, state) do
+    IO.puts "what the fuck!! #{inspect info}"
+    IO.puts "#{inspect :erlang.get_stacktrace()}"
+    {:noreply, state}
   end
 
   @doc false
@@ -252,6 +262,7 @@ defmodule Reagent.Listener do
         end
 
       { :error, reason } ->
+        IO.inspect self
         exit reason
     end
   end
